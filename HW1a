@@ -1,0 +1,31 @@
+# STA 250 HW 1a Notes
+
+# First method: piping in shell commands through R to
+# read columns
+
+# This version is just testing for one file, design for
+# multiple files later today.
+
+# Shell code
+# Unzips the chosen .bz2 file and returns the 15th column's
+# values only, while delimiting the commas (",")
+bunzip2 -c 1990.csv.bz2 | cut -f 15 -d ","
+# NOTE: Use grep -v "ArrDelay"!
+
+# Using in R
+x = readLines(pipe("bunzip2 -c 1990.csv.bz2 | cut -f 15 -d,"))
+# TIME: (21.5, 0.224, 13.699) - actual = 13.699 (?)
+# system.time(readLines(pipe("bunzip2 -c 1990.csv.bz2 | cut -f 15 -d,")))
+
+x.mod = x[2:length(x)] # removes "ArrDelay" if you didn't grep
+x.mod = as.numeric(x.mod)
+# NOTE: May need to remove "NA" not just NA
+# NOTE: Do as.numeric(x.mod) immediately!
+x.tab = data.frame(table(x.mod))
+x.tab = x.tab[1:738,] #(removes NA counts)
+x.time = as.numeric(as.matrix(x.tab[1]))
+x.count = as.numeric(as.matrix(x.tab[2]))
+
+# Mean of the values (simplify this!)
+mean((sum(x.time*x.count))/sum(x.count))
+# CLOSE YOUR CONNECTIONS!
