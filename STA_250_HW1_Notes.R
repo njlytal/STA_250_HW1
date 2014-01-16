@@ -3,6 +3,8 @@ STA 250 HW 1 Notes
 # This file contains tidbits of previous attempts at methods
 # for personal reference.
 
+# NEED TO GET XCode to install sed for 2001 & 2002 files
+
 # append this to existing method 1 code
 # DON'T just use built in functions for mean/med/sd
 | sort | uniq -c > file)
