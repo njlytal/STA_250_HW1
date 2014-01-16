@@ -1,31 +1,90 @@
-# STA 250 HW 1a Notes
+STA 250 HW 1 Notes
 
 # First method: piping in shell commands through R to
 # read columns
 
-# This version is just testing for one file, design for
-# multiple files later today.
 
-# Shell code
-# Unzips the chosen .bz2 file and returns the 15th column's
-# values only, while delimiting the commas (",")
-bunzip2 -c 1990.csv.bz2 | cut -f 15 -d ","
-# NOTE: Use grep -v "ArrDelay"!
 
-# Using in R
-x = readLines(pipe("bunzip2 -c 1990.csv.bz2 | cut -f 15 -d,"))
-# TIME: (21.5, 0.224, 13.699) - actual = 13.699 (?)
-# system.time(readLines(pipe("bunzip2 -c 1990.csv.bz2 | cut -f 15 -d,")))
+# In this case, all .csv files have already been extracted
+# from Delays1987_2013.tar.bz2 with
+# tar -xjvf Delays1987_2013.tar.bz2
 
-x.mod = x[2:length(x)] # removes "ArrDelay" if you didn't grep
-x.mod = as.numeric(x.mod)
-# NOTE: May need to remove "NA" not just NA
-# NOTE: Do as.numeric(x.mod) immediately!
-x.tab = data.frame(table(x.mod))
-x.tab = x.tab[1:738,] #(removes NA counts)
-x.time = as.numeric(as.matrix(x.tab[1]))
-x.count = as.numeric(as.matrix(x.tab[2]))
+# All CSV files should be placed in the same directory
+# (Except for 2001.csv and 2002.csv)
 
-# Mean of the values (simplify this!)
-mean((sum(x.time*x.count))/sum(x.count))
-# CLOSE YOUR CONNECTIONS!
+# NOTE: Due to issues getting sed to work correctly,
+# 2001.csv and 2002.csv are NOT considered in this method.
+# Subsequent methods will attempt to address issues that
+# currently exist with the unicode characters present
+# in the TailNum column of these CSV files.
+
+
+# *** For only pre-2008 files ***
+# This connection concatenates every CSV file in the
+# directory, removing the 15th column (which has
+# arrival delays), and removing the column title
+
+con1 = pipe("cat *.csv | cut -f 15 -d, | egrep -v '^$' |
+            egrep -v 'ArrDelay'")
+
+# *** For only 2008-onward files ***
+
+# Due to a change in format, the arrival delays are in
+# column 43 now. The titles also don't match up due to
+# the existence of commas in both ORIGIN and DEST columns.
+# Thus, we move over two spaces to "column 45" for the
+# correct values according to the comma delimiter.
+
+# This connection concatenates every CSV file in the
+# directory, removing the 45th column (which has
+# arrival delays), and removing the column title.
+# It also removes NULL values, which can appear in this
+# new format
+# NOTE: grep to remove NULL taken from Piazza
+
+con2 = pipe('cat *.csv | cut -f 45 -d, | egrep -v "^$" |
+            egrep -v "ARR_DEL15"')
+
+# Since we would prefer to keep the files together in the
+# same directory, we must take a different approach, rather
+# than applying these commands to every single CSV file.
+
+# This connection combines the above, taking all CSVs in
+# the same folder and performing different shell operations
+# depending on which category the file falls into.
+
+# Regular expressions are used to differentiate between
+# "oldfiles" (pre-2008) and "newfiles" (2008-onward)
+
+con3 = pipe("oldfiles=$(ls | egrep '[0-9]{4}.csv') \
+           newfiles=$(ls | egrep '[a-z].csv') \
+           cat $oldfiles | cut -f 15 -d, | egrep -v '^$' |
+           egrep -v 'ArrDelay' \
+           cat $newfiles | cut -f 45 -d, | egrep -v '^$' |
+            egrep -v 'ARR_DEL15'")
+
+open(con3, open="r") # Opens the defined connection to read
+del.both = readLines(con3) # contains all arrival delays
+close(con3) # Closes defined connection
+
+# At this point we can use built in functions to find the
+# mean, median, and standard deviation.
+
+# First, we convert the vector to numeric form to remove
+# the inherent parentheses. This will coerce NA terms.
+del.both = as.numeric(del.both)
+
+# To take the desired values, we consider all non-NA
+# values (but don't discard the NAs altogether).
+mu = mean(del.both, na.rm = TRUE)
+med = median(del.both, na.rm = TRUE)
+sd = sd(del.both, na.rm = TRUE)
+
+# NOTE: This method is not ideal due to the possibility of
+# overflow or numerical inaccuracy with such a large
+# dataset. Subsequent methods will take this into account
+# and pursue more reliable calculations.
+
+# Creates list with all important values
+list(time = time, results = c(mean = mu, median = med, sd = std),
+     system = Sys.info(),  session = sessionInfo(), ...)
