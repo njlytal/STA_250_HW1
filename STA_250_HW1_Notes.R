@@ -3,6 +3,19 @@ STA 250 HW 1 Notes
 # This file contains tidbits of previous attempts at methods
 # for personal reference.
 
+# append this to existing method 1 code
+# DON'T just use built in functions for mean/med/sd
+| sort | uniq -c > file)
+
+# Regular Expressions Notes
+
+ls | egrep '(1[0-9]{3}.csv|200[^1|2].csv)'
+# Identifies all old files except for 2001.csv and 2002.csv
+
+ls | egrep '200[1|2].csv'
+# Identifies 2001.csv and 2002.csv
+
+
 # *** For only pre-2008 files ***
 # This connection concatenates every CSV file in the
 # directory, removing the 15th column (which has

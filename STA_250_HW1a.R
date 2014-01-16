@@ -59,6 +59,8 @@ con2 = pipe('cat *.csv | cut -f 45 -d, | egrep -v "^$" |
 # Regular expressions are used to differentiate between
 # "oldfiles" (pre-2008) and "newfiles" (2008-onward)
 
+#specfiles=$(ls | egrep '[0-9]{4}.csv')
+
 con3 = pipe("oldfiles=$(ls | egrep '[0-9]{4}.csv') \
            newfiles=$(ls | egrep '[a-z].csv') \
            cat $oldfiles | cut -f 15 -d, | egrep -v '^$' |
