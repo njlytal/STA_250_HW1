@@ -8,6 +8,17 @@ STA 250 HW 1 Notes
 export LANG=C # This MUST be used to apply new definition of sed
 head /Users/Nick/Desktop/STA_250_HW1/2001.csv | cut -f 15 -d ,
 
+# This doesn't seem to work...just hangs
+start = proc.time()
+con3 = pipe("specfiles=$(ls | egrep '200[1|2].csv') \
+           cat $specfiles | cut -f 15 -d , | egrep -v '^$' |
+           egrep -v 'ArrDelay' | head")
+
+open(con3, open="r") 
+del.both = readLines(con3) 
+close(con3) 
+
+del.both = as.numeric(del.both)
 
 
 # NEED TO GET XCode to install sed for 2001 & 2002 files
