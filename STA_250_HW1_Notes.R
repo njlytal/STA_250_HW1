@@ -3,6 +3,13 @@ STA 250 HW 1 Notes
 # This file contains tidbits of previous attempts at methods
 # for personal reference.
 
+# XCode and sed command line tools now installed, the following
+# command works for extracting columns:
+export LANG=C # This MUST be used to apply new definition of sed
+head /Users/Nick/Desktop/STA_250_HW1/2001.csv | cut -f 15 -d ,
+
+
+
 # NEED TO GET XCode to install sed for 2001 & 2002 files
 
 # append this to existing method 1 code
