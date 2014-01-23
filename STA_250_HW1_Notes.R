@@ -3,6 +3,41 @@ STA 250 HW 1 Notes
 # This file contains tidbits of previous attempts at methods
 # for personal reference.
 
+
+#con = pipe("cat 1987.csv | cut -f 15 -d , | egrep -v '^$' |
+#             egrep -v 'ArrDelay'")
+
+
+conSQL = pipe("ls | egrep '[0-9]{4}.csv' ")
+open(conSQL, open="r") # Opens the defined connection to read
+oldfiles = readLines(conSQL) # files to load into database
+close(conSQL) # Closes defined connection
+
+conSQL2 = pipe("ls | egrep '[a-z].csv'")
+open(conSQL2, open="r")
+newfiles = readLines(conSQL2)
+close(conSQL2)
+
+# Sample for uploading 3 files
+# (Works, but takes 115 seconds for 1 GB... ~ 30 min for all)
+# start = proc.time()
+for(i in 1:length(oldfiles))
+{
+  dbWriteTable(db, name = "DataOld", value = "1987.csv",
+               header = TRUE, append = TRUE,
+               overwrite = FALSE)
+}
+
+for(i in 1:length(newfiles))
+{
+  dbWriteTable(db, name = "DataNew", value = oldfiles[i],
+               header = TRUE, append = TRUE,
+               overwrite = FALSE)
+}
+
+
+# ---
+
 # XCode and sed command line tools now installed, the following
 # command works for extracting columns:
 export LANG=C # This MUST be used to apply new definition of sed
