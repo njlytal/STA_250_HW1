@@ -61,29 +61,31 @@ con2 = pipe('cat *.csv | cut -f 45 -d, | egrep -v "^$" |
 
 #specfiles=$(ls | egrep '[0-9]{4}.csv')
 
-con3 = pipe("oldfiles=$(ls | egrep '[0-9]{4}.csv') \
+con = pipe("oldfiles=$(ls | egrep '1[0-9]{3}.csv|200[^1|2].csv') \
            newfiles=$(ls | egrep '[a-z].csv') \
            cat $oldfiles | cut -f 15 -d, | egrep -v '^$' |
+           egrep -v 'ArrDelay' \
+           cat 2001-2002.csv | cut -f 15 -d , | egrep -v '^$' |
            egrep -v 'ArrDelay' \
            cat $newfiles | cut -f 45 -d, | egrep -v '^$' |
            egrep -v 'ARR_DEL15'")
 
-open(con3, open="r") # Opens the defined connection to read
-del.both = readLines(con3) # contains all arrival delays
-close(con3) # Closes defined connection
+open(con, open="r") # Opens the defined connection to read
+delays = readLines(con) # contains all arrival delays
+close(con) # Closes defined connection
 
 # At this point we can use built in functions to find the
 # mean, median, and standard deviation.
 
 # First, we convert the vector to numeric form to remove
 # the inherent parentheses. This will coerce NA terms.
-del.both = as.numeric(del.both)
+delays = as.numeric(delays)
 
 # To take the desired values, we consider all non-NA
 # values (but don't discard the NAs altogether).
-mu = mean(del.both, na.rm = TRUE)
-med = median(del.both, na.rm = TRUE)
-sd = sd(del.both, na.rm = TRUE)
+mu = mean(delays, na.rm = TRUE)
+med = median(delays, na.rm = TRUE)
+sd = sd(delays, na.rm = TRUE)
 
 # NOTE: This method is not ideal due to the possibility of
 # overflow or numerical inaccuracy with such a large
@@ -92,27 +94,29 @@ sd = sd(del.both, na.rm = TRUE)
 
 # Time to perform all operations calculated here:
 start = proc.time()
-  con3 = pipe("oldfiles=$(ls | egrep '[0-9]{4}.csv') \
+  con = pipe("oldfiles=$(ls | egrep '1[0-9]{3}.csv|200[^1|2].csv') \
            newfiles=$(ls | egrep '[a-z].csv') \
            cat $oldfiles | cut -f 15 -d, | egrep -v '^$' |
            egrep -v 'ArrDelay' \
+           cat 2001-2002.csv | cut -f 15 -d , | egrep -v '^$' |
+           egrep -v 'ArrDelay' \
            cat $newfiles | cut -f 45 -d, | egrep -v '^$' |
-            egrep -v 'ARR_DEL15'")
+           egrep -v 'ARR_DEL15'")
   
-  open(con3, open="r") 
-  del.both = readLines(con3) 
-  close(con3) 
+  open(con, open="r") 
+  delays = readLines(con) 
+  close(con) 
 
-  del.both = as.numeric(del.both)
+  delays = as.numeric(delays)
   
-  mu = mean(del.both, na.rm = TRUE)
-  med = median(del.both, na.rm = TRUE)
-  sd = sd(del.both, na.rm = TRUE)
+  mu = mean(delays, na.rm = TRUE)
+  med = median(delays, na.rm = TRUE)
+  sd = sd(delays, na.rm = TRUE)
 
 time = proc.time() - start
 
 # Creates list with all important values
-results = list(time = time, results = c(mean = mu, median = med, sd = sd),
+results1 = list(time = time, results = c(mean = mu, median = med, sd = sd),
                system = Sys.info(),  session = sessionInfo(),
                computer = c(RAM = "16 GB 1600 MHz DDR3",
                             CPU = "2.6 GHz Intel Core i7",

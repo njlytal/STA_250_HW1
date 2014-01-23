@@ -10,21 +10,9 @@ cat $specfiles | sed -e 's/\xe4\xe6//g' | cut -f 15 -d , |
   egrep -v '^$' | egrep -v 'ArrDelay' > 2001-2002.csv
 
 # Method 1 Correction:
-con3 = pipe("oldfiles=$(ls | egrep '1[0-9]{3}.csv|200[^1|2].csv') \
-           newfiles=$(ls | egrep '[a-z].csv') \
-           cat $oldfiles | cut -f 15 -d, | egrep -v '^$' |
-           egrep -v 'ArrDelay' \
-           cat 2001-2002.csv | cut -f 15 -d , | egrep -v '^$' |
-           egrep -v 'ArrDelay' \
-           cat $newfiles | cut -f 45 -d, | egrep -v '^$' |
-           egrep -v 'ARR_DEL15'")
-
-# Method 2: Using a frequency table to calculate values
 
 
-
-
-# Method 3: Using SQL - COMPLETE
+# Method 2: Using SQL - COMPLETE
 
 # open RSQLite
 setwd("~/Desktop/STA_250_HW1")
@@ -89,6 +77,57 @@ time = proc.time() - start
 
 # Creates list with all important values
 results = list(time = time, results = c(mean = mu, median = med, sd = sd),
+               system = Sys.info(),  session = sessionInfo(),
+               computer = c(RAM = "16 GB 1600 MHz DDR3",
+                            CPU = "2.6 GHz Intel Core i7",
+                            Software = "OS X 10.8.5 (12F45)"))
+
+# Method 3: Using a frequency table to calculate values
+
+start = proc.time()
+con = pipe("oldfiles=$(ls | egrep '1[0-9]{3}.csv|200[^1|2].csv') \
+           newfiles=$(ls | egrep '[a-z].csv') \
+           cat $oldfiles | cut -f 15 -d, | egrep -v '^$' |
+           egrep -v 'ArrDelay' \
+           cat 2001-2002.csv | cut -f 15 -d , | egrep -v '^$' |
+           egrep -v 'ArrDelay' \
+           cat $newfiles | cut -f 45 -d, | egrep -v '^$' |
+           egrep -v 'ARR_DEL15'")
+
+
+open(con, open="r") 
+delays = readLines(con) 
+close(con)
+
+# Converts values into a frequency table
+delays = data.frame(table(delays))
+delays = delays[1:nrow(delays)-1,] #(removes NA counts)
+# All possible delay times
+d.time = as.numeric(as.matrix(delays[1])) 
+# Frequency of each  time
+d.count = as.numeric(as.matrix(delays[2])) 
+
+n = sum(d.count) # Number of entries
+sum.prod = sum(d.time*d.count) # sum of products
+sum.prod2 = sum((d.time^2)*d.count) # sum of counts by time squared
+
+# Mean of the values
+# Takes sum of all products and divides by total # entries
+mu = mean((sum.prod)/n)
+
+# Median of the values
+# Orders all values and takes middle one
+med = rep(d.time,d.count)[n/2]
+
+# Std. dev. of the values
+# Uses formula for variance (with n-1 correction),
+# then takes square root
+sd = sqrt((sum.prod2 - (sum.prod^2)/n)/(n-1))
+
+time = proc.time() - start
+
+# Creates list with all important values
+results3 = list(time = time, results = c(mean = mu, median = med, sd = sd),
                system = Sys.info(),  session = sessionInfo(),
                computer = c(RAM = "16 GB 1600 MHz DDR3",
                             CPU = "2.6 GHz Intel Core i7",
