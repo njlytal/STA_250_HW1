@@ -65,7 +65,7 @@ dbDisconnect(db)
 time = proc.time() - start # Ends time recording
 
 # Creates list with all important values
-results = list(time = time, results = c(mean = mu, median = med, sd = sd),
+results2 = list(time = time, results = c(mean = mu, median = med, sd = sd),
                system = Sys.info(),  session = sessionInfo(),
                computer = c(RAM = "16 GB 1600 MHz DDR3",
                             CPU = "2.6 GHz Intel Core i7",
