@@ -128,7 +128,12 @@ results3 = list(time = time, results = c(mean = mu, median = med, sd = sd),
                             CPU = "2.6 GHz Intel Core i7",
                             Software = "OS X 10.8.5 (12F45)"))
 
+# ************************************************************
+# ************************************************************
 # *** Plots ***
+
+# With results files from each of the three methods, we can
+# plot the data with these commands:
 
 par(mfrow=c(2,2))
 # Mean Results

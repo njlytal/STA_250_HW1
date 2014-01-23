@@ -4,6 +4,17 @@ STA 250 HW 1 Notes
 # for personal reference.
 
 
+# Comparing speed of built-in commands vs SQLite
+start = proc.time()
+dbGetQuery(db, 'SELECT AVG(delays) FROM ArrDelay')
+time = proc.time() - start
+
+start2 = proc.time()
+mean(as.numeric(as.matrix(delays)), na.rm = TRUE)
+time2 = proc.time() - start2
+
+# The two times are essentially equal (~32-36 seconds).
+
 # SAMPLE: Writes a table for one CSV file
 # dbWriteTable(db, name="Y1987", value = "1987.csv",
 #             header = TRUE)
