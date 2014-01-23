@@ -10,13 +10,12 @@
 # "tar -xjvf Delays1987_2013.tar.bz2"
 
 # All CSV files should be placed in the same directory
-# (Except for 2001.csv and 2002.csv)
+# NOTE: Due to difficulty piping in sed commands to R, we construct a 
+# separate file for the 2001 and 2002 data.
 
-# NOTE: Due to issues getting sed to work correctly,
-# 2001.csv and 2002.csv are NOT considered in this method.
-# Subsequent methods will attempt to address issues that
-# currently exist with the unicode characters present
-# in the TailNum column of these CSV files.
+# Shell code to make this separate file
+cat $specfiles | sed -e 's/\xe4\xe6//g' | cut -f 15 -d , |
+  egrep -v '^$' | egrep -v 'ArrDelay' > 2001-2002.csv
 
 
 # *** For only pre-2008 files ***

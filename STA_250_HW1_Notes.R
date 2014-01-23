@@ -4,6 +4,19 @@ STA 250 HW 1 Notes
 # for personal reference.
 
 
+# SAMPLE: Writes a table for one CSV file
+# dbWriteTable(db, name="Y1987", value = "1987.csv",
+#             header = TRUE)
+# grep('[0-9]{4}.csv', "~/Desktop/STA_250_HW1")
+# x = dbGetQuery(db, 'SELECT AVG(ArrDelay) FROM Data;')
+
+
+con = pipe(" cat 2001-2002.csv | cut -f 15 -d , | egrep -v '^$' | egrep -v 'ArrDelay'")
+open(con, open="r") 
+delays = readLines(con) 
+close(con) 
+
+
 #con = pipe("cat 1987.csv | cut -f 15 -d , | egrep -v '^$' |
 #             egrep -v 'ArrDelay'")
 

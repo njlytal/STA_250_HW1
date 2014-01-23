@@ -2,37 +2,18 @@
 # Author: Nicholas Lytal (991834259)
 
 
-# NOTE: Due to difficulty piping in sed commands to R, we construct a 
-# separate file for the 2001 and 2002 data.
-
-# Shell code to make separate file
-cat $specfiles | sed -e 's/\xe4\xe6//g' | cut -f 15 -d , |
-  egrep -v '^$' | egrep -v 'ArrDelay' > 2001-2002.csv
-
-# Method 1 Correction:
-
-
-# Method 2: Using SQL - COMPLETE
+# *** Method 2: Using SQLite to calculate values ***
 
 # open RSQLite
+# First set working directory to the one containing
+# your CSV files.
 setwd("~/Desktop/STA_250_HW1")
+
+start = proc.time() # Begins timing
 db = dbConnect('SQLite', dbname = "Airline.sqlite")
 
-# SAMPLE: Writes a table for one CSV file
-# dbWriteTable(db, name="Y1987", value = "1987.csv",
-#             header = TRUE)
-# grep('[0-9]{4}.csv', "~/Desktop/STA_250_HW1")
-# x = dbGetQuery(db, 'SELECT AVG(ArrDelay) FROM Data;')
-
-
-con = pipe(" cat 2001-2002.csv | cut -f 15 -d , | egrep -v '^$' | egrep -v 'ArrDelay'")
-open(con, open="r") 
-delays = readLines(con) 
-close(con) 
-
-start = proc.time()
-
-db = dbConnect('SQLite', dbname = "Airline.sqlite")
+# As explained in HW1a, this contains all necessary
+# shell commands to isolate arrival delays
 con = pipe("oldfiles=$(ls | egrep '1[0-9]{3}.csv|200[^1|2].csv') \
            newfiles=$(ls | egrep '[a-z].csv') \
            cat $oldfiles | cut -f 15 -d, | egrep -v '^$' |
@@ -42,14 +23,18 @@ con = pipe("oldfiles=$(ls | egrep '1[0-9]{3}.csv|200[^1|2].csv') \
            cat $newfiles | cut -f 45 -d, | egrep -v '^$' |
            egrep -v 'ARR_DEL15'")
 
-
 open(con, open="r") 
 delays = readLines(con) 
 close(con) 
 
+# Converts piped in data to a data frame for insertion
+# into a database
 delays = as.data.frame(delays)
+
+# Creates table
 dbWriteTable(db, name = "ArrDelay", value = delays)
 
+# Takes average
 mu = as.numeric(dbGetQuery(db, 'SELECT AVG(delays) FROM ArrDelay;'))
 
 # This orders the values (ORDER BY), then chooses either
@@ -69,11 +54,15 @@ med = as.numeric(dbGetQuery(db, 'SELECT AVG(delays)
             FROM ArrDelay))'))
 
 # Queries the variance, then takes square root to get sd
+# Here, variance is "expected value of delays squared" minus
+# the "square of expected value of delays"
 sd = as.numeric(sqrt(dbGetQuery(db, 'SELECT (AVG(delays*delays) -
                 AVG(delays)*AVG(delays))
                 FROM ArrDelay;')))
+
+# Disconnects from database
 dbDisconnect(db)
-time = proc.time() - start
+time = proc.time() - start # Ends time recording
 
 # Creates list with all important values
 results = list(time = time, results = c(mean = mu, median = med, sd = sd),
@@ -82,9 +71,14 @@ results = list(time = time, results = c(mean = mu, median = med, sd = sd),
                             CPU = "2.6 GHz Intel Core i7",
                             Software = "OS X 10.8.5 (12F45)"))
 
-# Method 3: Using a frequency table to calculate values
+# ************************************************************
+# ************************************************************
+# *** Method 3: Using a frequency table to calculate values ***
 
-start = proc.time()
+start = proc.time() # Begins timing
+
+# As explained in HW1a, this contains all necessary
+# shell commands to isolate arrival delays
 con = pipe("oldfiles=$(ls | egrep '1[0-9]{3}.csv|200[^1|2].csv') \
            newfiles=$(ls | egrep '[a-z].csv') \
            cat $oldfiles | cut -f 15 -d, | egrep -v '^$' |
@@ -94,17 +88,18 @@ con = pipe("oldfiles=$(ls | egrep '1[0-9]{3}.csv|200[^1|2].csv') \
            cat $newfiles | cut -f 45 -d, | egrep -v '^$' |
            egrep -v 'ARR_DEL15'")
 
-
 open(con, open="r") 
 delays = readLines(con) 
 close(con)
 
 # Converts values into a frequency table
 delays = data.frame(table(delays))
-delays = delays[1:nrow(delays)-1,] #(removes NA counts)
+
+#removes NA counts, contained in last row of table
+delays = delays[1:nrow(delays)-1,] 
 # All possible delay times
 d.time = as.numeric(as.matrix(delays[1])) 
-# Frequency of each  time
+# Frequency of each time
 d.count = as.numeric(as.matrix(delays[2])) 
 
 n = sum(d.count) # Number of entries
@@ -117,7 +112,7 @@ mu = mean((sum.prod)/n)
 
 # Median of the values
 # Orders all values and takes middle one
-med = rep(d.time,d.count)[n/2]
+med = sort(rep(d.time,d.count))[n/2]
 
 # Std. dev. of the values
 # Uses formula for variance (with n-1 correction),
@@ -132,3 +127,31 @@ results3 = list(time = time, results = c(mean = mu, median = med, sd = sd),
                computer = c(RAM = "16 GB 1600 MHz DDR3",
                             CPU = "2.6 GHz Intel Core i7",
                             Software = "OS X 10.8.5 (12F45)"))
+
+# *** Plots ***
+
+par(mfrow=c(2,2))
+# Mean Results
+plot(c(results1$results[1],results2$results[1],results3$results[1]),
+     col = c('red','black','blue'), xlab = "Method Used", ylab = "Mean",
+     main = "Mean according to Methods", ylim = c(6.4,6.6), pch = 15)
+
+# Median Results
+plot(c(results1$results[2],results2$results[2],results3$results[2]),
+     col = c('red','black','blue'), xlab = "Method Used", ylab = "Median",
+     main = "Median according to Methods", pch = 15)
+
+# Standard Deviation Results
+plot(c(results1$results[3],results2$results[3],results3$results[3]),
+     col = c('red','black','blue'), xlab = "Method Used", ylab = "Std Dev",
+     main = "Standard Deviation according to Methods", ylim = c(31,32),
+     pch = 15)
+
+# Time Elapsed
+plot(c(results1$time[3],results2$time[3],results3$time[3]),
+     col = c('red','black','blue'), xlab = "Method Used", ylim = c(0,3000),
+     ylab = "Time (sec)", main = "Time Elapsed by Method", pch = 15)
+
+legend("topright", c("Direct Input", "SQLite", "Freq. Table"),
+       col = c('red','black','blue'), pch = 15)
+
